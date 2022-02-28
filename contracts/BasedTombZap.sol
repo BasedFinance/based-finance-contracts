@@ -2,7 +2,6 @@
 
 pragma solidity ^0.8.0;
 
-import "./interfaces/IHyperswapRouter01.sol";
 import "./interfaces/IUniswapV2Pair.sol";
 import "./interfaces/IUniswapV2Router.sol";
 import "./interfaces/IVault.sol";
@@ -14,7 +13,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract BShareFtmZap is Ownable {
+contract BasedTombZap is Ownable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -27,7 +26,7 @@ contract BShareFtmZap is Ownable {
 
     mapping (address => bool) public useNativeRouter;
 
-    // Based address here
+    // BShare address
     constructor(address _NATIVE) Ownable() {
         NATIVE = _NATIVE;
     }
@@ -35,6 +34,10 @@ contract BShareFtmZap is Ownable {
     /* ========== External Functions ========== */
 
     receive() external payable {}
+
+    function NativeToken() public view returns (address) {
+        return NATIVE;
+    }
 
     // @_from - Token we want to throw in
     // @amount - amount of our _from
@@ -57,7 +60,6 @@ contract BShareFtmZap is Ownable {
             address other = _from == IUniswapV2Pair(_to).token0() ? IUniswapV2Pair(_to).token1() : IUniswapV2Pair(_to).token0();
             // calculate amount of _from to sell
             uint256 sellAmount = _amt.div(2);
-            //
             // calculate amount of other token for potential lp
             uint256 otherAmount = _estimateSwap(_from, sellAmount, other, _router);
             if (_from == IUniswapV2Pair(_to).token0()) {
@@ -197,40 +199,29 @@ contract BShareFtmZap is Ownable {
     function _swapNativeToLP(address _LP, uint256 amount, address recipient, address routerAddress) private returns (uint256) {
         // LP
         IUniswapV2Pair pair = IUniswapV2Pair(_LP);
-        address token0 = pair.token0();
-        address token1 = pair.token1();
+        address token0 = pair.token0();  // based
+        address token1 = pair.token1();  // tomb
         uint256 liquidity;
-        if (token0 == NATIVE || token1 == NATIVE) {
-            address token = token0 == NATIVE ? token1 : token0;
-            ( , , liquidity) = _swapHalfNativeAndProvide(token, amount, routerAddress, recipient);
-        } else {
-            ( , , liquidity) = _swapNativeToEqualTokensAndProvide(token0, token1, amount, routerAddress, recipient);
-        }
+        ( , , liquidity) = _swapNativeToEqualTokensAndProvide(token0, token1, amount, routerAddress, recipient);
         return liquidity;
     }
 
-    function _swapHalfNativeAndProvide(address token, uint256 amount, address routerAddress, address recipient) private returns (uint256, uint256, uint256) {
-        uint256 swapValue = amount.div(2);
-        uint256 tokenAmount = _swapNativeForToken(token, swapValue, address(this), routerAddress);
-        _approveTokenIfNeeded(token, routerAddress);
-        if (useNativeRouter[routerAddress]) {
-            IHyperswapRouter01 router = IHyperswapRouter01(routerAddress);
-            return router.addLiquidityFTM{value : amount.sub(swapValue)}(token, tokenAmount, 0, 0, recipient, block.timestamp);
-        }
-        else {
-            IUniswapV2Router router = IUniswapV2Router(routerAddress);
-            return router.addLiquidityETH{value : amount.sub(swapValue)}(token, tokenAmount, 0, 0, recipient, block.timestamp);
-        }
-    }
 
     function _swapNativeToEqualTokensAndProvide(address token0, address token1, uint256 amount, address routerAddress, address recipient) private returns (uint256, uint256, uint256) {
         uint256 swapValue = amount.div(2);
-        uint256 token0Amount = _swapNativeForToken(token0, swapValue, address(this), routerAddress);
-        uint256 token1Amount = _swapNativeForToken(token1, amount.sub(swapValue), address(this), routerAddress);
-        _approveTokenIfNeeded(token0, routerAddress);
-        _approveTokenIfNeeded(token1, routerAddress);
         IUniswapV2Router router = IUniswapV2Router(routerAddress);
-        return router.addLiquidity(token0, token1, token0Amount, token1Amount, 0, 0, recipient, block.timestamp);
+
+        if (token0 == NATIVE) {
+            uint256 token1Amount = _swapNativeForToken(token1, swapValue, address(this), routerAddress);
+            _approveTokenIfNeeded(token0, routerAddress);
+            _approveTokenIfNeeded(token1, routerAddress);
+            return router.addLiquidity(token0, token1, amount.sub(swapValue), token1Amount, 0, 0, recipient, block.timestamp);
+        } else {
+            uint256 token0Amount = _swapNativeForToken(token0, swapValue, address(this), routerAddress);
+            _approveTokenIfNeeded(token0, routerAddress);
+            _approveTokenIfNeeded(token1, routerAddress);
+            return router.addLiquidity(token0, token1, token0Amount, amount.sub(swapValue), 0, 0, recipient, block.timestamp);
+        }
     }
 
     function _swapNativeForToken(address token, uint256 value, address recipient, address routerAddr) private returns (uint256) {
@@ -248,7 +239,7 @@ contract BShareFtmZap is Ownable {
             path[1] = token;
         }
 
-        uint256[] memory amounts = router.swapExactETHForTokens{value : value}(0, path, recipient, block.timestamp);
+        uint256[] memory amounts = router.swapExactTokensForTokens(value, 0, path, recipient, block.timestamp);
         return amounts[amounts.length - 1];
     }
 
@@ -260,14 +251,14 @@ contract BShareFtmZap is Ownable {
             path = new address[](3);
             path[0] = token;
             path[1] = tokenBridgeForRouter[token][routerAddr];
-            path[2] = router.WETH();
+            path[2] = NATIVE;
         } else {
             path = new address[](2);
             path[0] = token;
-            path[1] = router.WETH();
+            path[1] = NATIVE;
         }
 
-        uint256[] memory amounts = router.swapExactTokensForETH(amount, 0, path, recipient, block.timestamp);
+        uint256[] memory amounts = router.swapExactTokensForTokens(amount, 0, path, recipient, block.timestamp);
         return amounts[amounts.length - 1];
     }
 
@@ -388,17 +379,12 @@ contract BShareFtmZap is Ownable {
 
     /* ========== RESTRICTED FUNCTIONS ========== */
 
-    function setTokenBridgeForRouter(address token, address router, address bridgeToken) external onlyOwner {
-        tokenBridgeForRouter[token][router] = bridgeToken;
+    function setNativeToken(address _NATIVE) external onlyOwner {
+        NATIVE = _NATIVE;
     }
 
-    function withdraw(address token) external onlyOwner {
-        if (token == address(0)) {
-            payable(owner()).transfer(address(this).balance);
-            return;
-        }
-
-        IERC20(token).transfer(owner(), IERC20(token).balanceOf(address(this)));
+    function setTokenBridgeForRouter(address token, address router, address bridgeToken) external onlyOwner {
+        tokenBridgeForRouter[token][router] = bridgeToken;
     }
 
     function setUseNativeRouter(address router) external onlyOwner {

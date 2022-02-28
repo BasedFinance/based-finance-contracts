@@ -18,7 +18,7 @@ let contractArgsMap = new Map<string, any[]>([
     ['Acropolis', []],
     ['Based', []],
     ['BasedTombZap', [bShareTokenAddr]],
-    ['contracts/BShareFtmZap.sol:BShareFtmZap', [basedTokenAddr]],
+    ['contracts/BshareFtmZap.sol:BShareFtmZap', [basedTokenAddr]],
     ['BShare', []],
     ['BBond', []],
     ['Treasury', []],

@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-interface IHyperswapRouter01 {
+interface IHyperswapRouter {
     function factory() external pure returns (address);
 
     function WFTM() external pure returns (address);
