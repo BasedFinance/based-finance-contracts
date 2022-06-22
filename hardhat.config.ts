@@ -27,7 +27,7 @@ const config: HardhatUserConfig = {
             // gasMultiplier: 2,
         },
         rinkeby: {
-            url: `https://eth-rinkeby.alchemyapi.io/v2/${process.env.RINKEBY_API_KEY}`,
+            url: 'https://rinkeby.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161',
             accounts: [`${process.env.METAMASK_KEY}`],
         },
     },
@@ -35,8 +35,8 @@ const config: HardhatUserConfig = {
         // Your API key for Etherscan
         // Obtain one at https://etherscan.io/
         apiKey: {
-            opera: process.env.FTMSCAN_API_KEY,
-            rinkeby: process.env.ETHERSCAN_API_KEY,
+            opera: 'Q74P6QA4NBURP6CA8V4DGFGBPGQ6JPG5WM',
+            rinkeby: 'XFAGSFB6UXE9MFTA9AHJMGHMXI8IXRVCHW',
         },
     },
 };

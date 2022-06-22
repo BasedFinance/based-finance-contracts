@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.4;
 
-import "./token/onft/ONFT.sol";
-import "./interfaces/IGodNFT.sol";
+import "../token/onft/ONFT.sol";
+import "../interfaces/IGodNFT.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract GodNFT is ONFT, IGodNFT {
