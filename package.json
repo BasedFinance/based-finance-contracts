@@ -16,6 +16,7 @@
     "chai-as-promised": "7.1.1",
     "chai-bignumber": "3.0.0",
     "dotenv": "^11.0.0",
+    "hardhat-deploy": "^0.11.10",
     "identicon.js": "^2.3.3",
     "solc": "^0.8.6"
   },
@@ -51,7 +52,7 @@
   "devDependencies": {
     "@nomiclabs/buidler": "^1.4.8",
     "@nomiclabs/hardhat-ethers": "^2.0.4",
-    "@nomiclabs/hardhat-etherscan": "^3.0.0",
+    "@nomiclabs/hardhat-etherscan": "^3.1.0",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
     "@typechain/ethers-v5": "^9.0.0",
     "@types/mocha": "^9.0.0",

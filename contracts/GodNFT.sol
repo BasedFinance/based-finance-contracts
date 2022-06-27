@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.4;
 
@@ -35,31 +35,5 @@ contract GodNFT is ONFT, IGodNFT {
     function setManagerAddress(address _managerAddress) public onlyOwner {
         managerAddress = _managerAddress;
     }
-    function getTokenList(address account) external view returns (uint256[] memory) {
-        require(msg.sender != address(0));
-        require(account != address(0));
 
-        address selectedAccount = msg.sender;
-        if (owner() == msg.sender)
-            selectedAccount = account;
-
-        uint256 count = balanceOf(selectedAccount);
-        uint256[] memory tokenIdList = new uint256[](count);
-
-        if (count == 0)
-            return tokenIdList;
-
-        uint256 cnt = 0;
-        for (uint256 i = 1; i < (nextMintId + 1); i++) {
-
-            if (_exists(i) && (ownerOf(i) == selectedAccount)) {
-                tokenIdList[cnt++] = i;
-            }
-
-            if (cnt == count)
-                break;
-        }
-
-        return tokenIdList;
-    }
 }

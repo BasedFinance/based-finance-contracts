@@ -3,7 +3,7 @@
 pragma solidity ^0.8.4;
 
 import "./GODtoken.sol";
-import "./NFT/GodNFT.sol";
+import "./GodNFT.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract NFTStaker is Ownable, IERC721Receiver {
@@ -52,7 +52,7 @@ using SafeERC20 for IERC20;
       ownedStakesBalance[_owner]++;
       
       nft.transferFrom(msg.sender, address(this), tokenId);
-      token.safeTransfer(msg.sender, 10**18);
+      token.safeTransfer(msg.sender, 1);
     }
   }
 
@@ -82,7 +82,7 @@ using SafeERC20 for IERC20;
 
       ownedStakesBalance[msg.sender]--;
       nft.transferFrom(address(this), _staker, tokenId);
-      token.safeTransferFrom(msg.sender, address(this), 10**18);
+      token.safeTransferFrom(msg.sender, address(this), 1);
     }
   }
 
